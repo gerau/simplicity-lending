@@ -64,8 +64,10 @@ impl<V> WatchCache<V> {
     }
 
     pub fn get(&self, outpoint: &OutPoint) -> Option<&V> {
-        if let Some(pending) = self.block_pending.as_ref()
-            && let Some(op) = pending.get(outpoint)
+        if let Some(op) = self
+            .block_pending
+            .as_ref()
+            .and_then(|pending| pending.get(outpoint))
         {
             return match op {
                 PendingOp::Upsert(cached_data) => Some(cached_data),
