@@ -60,11 +60,12 @@ impl FactoryCreationsTracker {
             // Best-effort ELIP-0100 metadata registration.
             // When the creation committed the expected asset contract, submit it to the registry.
             // Verifying the metadata remains the wallets' responsibility.
-            if let Some(registration) = &self.asset_registration
-                && let Some(contract) =
+            if let Some(registration) = &self.asset_registration {
+                if let Some(contract) =
                     registration.verified_contract(AssetContractKind::Factory, tx, factory_asset_id)
-            {
-                registration.spawn_registration(factory_asset_id, contract);
+                {
+                    registration.spawn_registration(factory_asset_id, contract);
+                }
             }
         }
 

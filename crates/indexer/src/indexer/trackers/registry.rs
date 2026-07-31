@@ -107,17 +107,19 @@ impl TrackerRegistry {
             )
             .await?;
 
-        if !offer_spent && let Some(factory_id) = factory_effect.issuance_factory_id() {
-            self.creations
-                .process_creation_tx(
-                    sql_tx,
-                    tx,
-                    block_height,
-                    factory_id,
-                    &mut self.offers,
-                    &mut self.participants,
-                )
-                .await?;
+        if !offer_spent {
+            if let Some(factory_id) = factory_effect.issuance_factory_id() {
+                self.creations
+                    .process_creation_tx(
+                        sql_tx,
+                        tx,
+                        block_height,
+                        factory_id,
+                        &mut self.offers,
+                        &mut self.participants,
+                    )
+                    .await?;
+            }
         }
 
         Ok(())

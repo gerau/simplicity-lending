@@ -112,15 +112,16 @@ impl OfferParticipantsTracker {
         spend_participant_utxo(sql_tx, old_outpoint, block_height, txid).await?;
         self.cache.remove(old_outpoint);
 
-        let found_output = tx.output.iter().enumerate().find_map(|(vout, output)| {
-            if let Some(asset) = output.asset.explicit()
-                && asset.into_inner().0.to_vec() == target_asset_id
-            {
-                return Some((vout as u32, &output.script_pubkey));
-            }
-            None
-        });
-
+        let found_output =
+            tx.output
+                .iter()
+                .enumerate()
+                .find_map(|(vout, output)| match output.asset.explicit() {
+                    Some(asset) if asset.into_inner().0.to_vec() == target_asset_id => {
+                        Some((vout as u32, &output.script_pubkey))
+                    }
+                    _ => None,
+                });
         if let Some((vout, script_pubkey)) = found_output {
             if script_pubkey.is_op_return() {
                 tracing::info!(
