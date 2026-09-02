@@ -1,0 +1,416 @@
+mod unit_1 {
+    pub fn is_output_op_return(output_index: u32) -> bool {
+    match jet::output_null_datum(output_index, 0){
+    None => false,
+    Some(entry: Option<Either<(u2, u256), Either<u1, u4>>>) => true,
+    }}
+    pub fn assert_output_is_op_return(output_index: u32) {
+    assert!(is_output_op_return(output_index));
+    }
+}
+mod unit_2 {
+    pub fn checked_add_64(a: u64, b: u64) -> Option<u64> {
+    let (carry, sum): (bool, u64) = jet::add_64(a, b);
+        match carry{
+    false => Some(sum),
+    true => None,
+    }}
+    pub fn safe_add_64(a: u64, b: u64) -> u64 {
+    unwrap(checked_add_64(a, b))}
+    pub fn checked_sub_64(a: u64, b: u64) -> Option<u64> {
+    let (borrow, diff): (bool, u64) = jet::subtract_64(a, b);
+        match borrow{
+    false => Some(diff),
+    true => None,
+    }}
+    pub fn safe_sub_64(a: u64, b: u64) -> u64 {
+    unwrap(checked_sub_64(a, b))}
+    pub fn checked_mul_64(a: u64, b: u64) -> Option<u64> {
+    let result: u128 = jet::multiply_64(a, b);
+        let (high, low): (u64, u64) = <u128>::into(result);
+        match jet::is_zero_64(high){
+    false => None,
+    true => Some(low),
+    }}
+    pub fn safe_mul_64(a: u64, b: u64) -> u64 {
+    unwrap(checked_mul_64(a, b))}
+    pub fn checked_div_64(a: u64, b: u64) -> Option<u64> {
+    match jet::is_zero_64(b){
+    false => Some(jet::divide_64(a, b)),
+    true => None,
+    }}
+    pub fn safe_div_64(a: u64, b: u64) -> u64 {
+    unwrap(checked_div_64(a, b))}
+    pub fn gt_64(a: u64, b: u64) -> bool {
+    jet::lt_64(b, a)}
+    pub fn ge_64(a: u64, b: u64) -> bool {
+    jet::le_64(b, a)}
+}
+mod unit_9 {
+    pub fn not(bit: bool) -> bool {
+    <u1>::into(jet::complement_1(<bool>::into(bit)))}
+    pub fn or(a: bool, b: bool) -> bool {
+    <u1>::into(jet::or_1(<bool>::into(a), <bool>::into(b)))}
+    pub fn and(a: bool, b: bool) -> bool {
+    <u1>::into(jet::and_1(<bool>::into(a), <bool>::into(b)))}
+    pub fn xor(a: bool, b: bool) -> bool {
+    and(or(a, b), not(and(a, b)))}
+}
+mod unit_8 {
+    use crate::unit_9::and;
+    pub fn and_128(a: u128, b: u128) -> u128 {
+    let (a_high, a_low): (u64, u64) = <u128>::into(a);
+        let (b_high, b_low): (u64, u64) = <u128>::into(b);
+        <(u64, u64)>::into((jet::and_64(a_high, b_high), jet::and_64(a_low, b_low)))}
+    pub fn or_128(a: u128, b: u128) -> u128 {
+    let (a_high, a_low): (u64, u64) = <u128>::into(a);
+        let (b_high, b_low): (u64, u64) = <u128>::into(b);
+        <(u64, u64)>::into((jet::or_64(a_high, b_high), jet::or_64(a_low, b_low)))}
+    pub fn eq_128(a: u128, b: u128) -> bool {
+    let (a_high, a_low): (u64, u64) = <u128>::into(a);
+        let (b_high, b_low): (u64, u64) = <u128>::into(b);
+        and(jet::eq_64(a_high, b_high), jet::eq_64(a_low, b_low))}
+    pub fn left_shift_128(shift: u8, a: u128) -> u128 {
+    match jet::is_zero_8(shift){
+    false => {
+    let (a_high, a_low): (u64, u64) = <u128>::into(a);
+        match jet::lt_8(shift, 64){
+    false => {
+    let (_, shift): (bool, u8) = jet::subtract_8(shift, 64);
+        <(u64, u64)>::into((jet::left_shift_64(shift, a_low), 0))}
+    ,
+    true => {
+    let (_, low_to_high_amount): (bool, u8) = jet::subtract_8(64, shift);
+        let shifted_bits: u64 = jet::right_shift_64(low_to_high_amount, a_low);
+        let res_high: u64 = jet::or_64(jet::left_shift_64(shift, a_high), shifted_bits);
+        <(u64, u64)>::into((res_high, jet::left_shift_64(shift, a_low)))}
+    ,
+    }}
+    ,
+    true => a,
+    }}
+    pub fn right_shift_128(shift: u8, a: u128) -> u128 {
+    match jet::is_zero_8(shift){
+    false => {
+    let (a_high, a_low): (u64, u64) = <u128>::into(a);
+        match jet::lt_8(shift, 64){
+    false => {
+    let (_, shift): (bool, u8) = jet::subtract_8(shift, 64);
+        <(u64, u64)>::into((0, jet::right_shift_64(shift, a_high)))}
+    ,
+    true => {
+    let (_, high_to_low_amount): (bool, u8) = jet::subtract_8(64, shift);
+        let shifted_bits: u64 = jet::left_shift_64(high_to_low_amount, a_high);
+        let res_low: u64 = jet::or_64(jet::right_shift_64(shift, a_low), shifted_bits);
+        <(u64, u64)>::into((jet::right_shift_64(shift, a_high), res_low))}
+    ,
+    }}
+    ,
+    true => a,
+    }}
+}
+mod unit_6 {
+    use crate::unit_8::eq_128;
+    pub fn assert_eq_1(a: u1, b: u1) {
+    assert!(jet::eq_1(a, b))}
+    pub fn assert_eq_8(a: u8, b: u8) {
+    assert!(jet::eq_8(a, b));
+    }
+    pub fn assert_eq_16(a: u16, b: u16) {
+    assert!(jet::eq_16(a, b));
+    }
+    pub fn assert_eq_32(a: u32, b: u32) {
+    assert!(jet::eq_32(a, b));
+    }
+    pub fn assert_eq_64(a: u64, b: u64) {
+    assert!(jet::eq_64(a, b));
+    }
+    pub fn assert_eq_128(a: u128, b: u128) {
+    assert!(eq_128(a, b));
+    }
+    pub fn assert_eq_256(a: u256, b: u256) {
+    assert!(jet::eq_256(a, b));
+    }
+    pub fn assert_eq_bool(a: bool, b: bool) {
+    assert_eq_1(<bool>::into(a), <bool>::into(b));
+    }
+    pub fn assert_none_1(val: Option<u1>) {
+    assert!(is_none::<u1>(val));
+    }
+    pub fn assert_none_8(val: Option<u8>) {
+    assert!(is_none::<u8>(val));
+    }
+    pub fn assert_none_16(val: Option<u16>) {
+    assert!(is_none::<u16>(val));
+    }
+    pub fn assert_none_32(val: Option<u32>) {
+    assert!(is_none::<u32>(val));
+    }
+    pub fn assert_none_64(val: Option<u64>) {
+    assert!(is_none::<u64>(val));
+    }
+    pub fn assert_none_128(val: Option<u128>) {
+    assert!(is_none::<u128>(val));
+    }
+    pub fn assert_none_256(val: Option<u256>) {
+    assert!(is_none::<u256>(val));
+    }
+}
+mod unit_3 {
+    use crate::unit_6::{assert_eq_1, assert_eq_64, assert_eq_256};
+    pub fn get_explicit_asset_and_amount(index: u32, is_input_index: bool) -> (u256, u64) {
+    let pair: (Asset1, Amount1) = match is_input_index{
+    false => {
+    unwrap(jet::output_amount(index))}
+    ,
+    true => {
+    unwrap(jet::input_amount(index))}
+    ,
+    };
+        let (asset, amount): (Asset1, Amount1) = pair;
+        let asset_bits: u256 = unwrap_right::<(u1, u256)>(asset);
+        let amount: u64 = unwrap_right::<(u1, u256)>(amount);
+        (asset_bits, amount)}
+    pub fn get_input_explicit_asset_and_amount(input_index: u32) -> (u256, u64) {
+    get_explicit_asset_and_amount(input_index, true)}
+    pub fn get_output_explicit_asset_and_amount(output_index: u32) -> (u256, u64) {
+    get_explicit_asset_and_amount(output_index, false)}
+    pub fn get_script_hash(index: u32, is_input_index: bool) -> u256 {
+    match is_input_index{
+    false => {
+    unwrap(jet::output_script_hash(index))}
+    ,
+    true => {
+    unwrap(jet::input_script_hash(index))}
+    ,
+    }}
+    pub fn get_input_script_hash(input_index: u32) -> u256 {
+    get_script_hash(input_index, true)}
+    pub fn get_output_script_hash(output_index: u32) -> u256 {
+    get_script_hash(output_index, false)}
+    pub fn check_asset_amounts_eq(asset_amount_1: u64, asset_amount_2: u64) {
+    assert_eq_64(asset_amount_1, asset_amount_2);
+    }
+    pub fn check_assets_eq(asset_bits_1: u256, asset_bits_2: u256) {
+    assert_eq_256(asset_bits_1, asset_bits_2);
+    }
+    pub fn check_script_hashes_eq(script_1: u256, script_2: u256) {
+    assert_eq_256(script_1, script_2);
+    }
+    pub fn check_flags_eq(flag_1: bool, flag_2: bool) {
+    assert_eq_1(<bool>::into(flag_1), <bool>::into(flag_2));
+    }
+}
+mod unit_4 {
+    use crate::unit_1::assert_output_is_op_return;
+    use crate::unit_2::{ge_64, safe_add_64};
+    use crate::unit_3::{get_input_explicit_asset_and_amount, get_output_explicit_asset_and_amount, get_input_script_hash, get_output_script_hash, check_asset_amounts_eq, check_assets_eq, check_script_hashes_eq};
+    pub fn ensure_non_zero_amount(amount: u64) {
+    assert!(jet::some_64(amount));
+    }
+    pub fn ensure_input_script_hash(input_index: u32, expected_script_hash: u256) {
+    check_script_hashes_eq(get_input_script_hash(input_index), expected_script_hash);
+    }
+    pub fn ensure_output_script_hash(output_index: u32, expected_script_hash: u256) {
+    check_script_hashes_eq(get_output_script_hash(output_index), expected_script_hash);
+    }
+    pub fn ensure_io_script_hashes_eq(input_index: u32, output_index: u32) {
+    check_script_hashes_eq(get_input_script_hash(input_index), get_output_script_hash(output_index));
+    }
+    pub fn ensure_script_hash_transition(input_index: u32, output_index: u32, expected_input_script_hash: u256, expected_output_script_hash: u256) {
+    ensure_input_script_hash(input_index, expected_input_script_hash);
+        ensure_output_script_hash(output_index, expected_output_script_hash);
+    }
+    pub fn ensure_input_asset_and_amount(input_index: u32, expected_asset_bits: u256, expected_amount: u64) {
+    let (asset_bits, amount): (u256, u64) = get_input_explicit_asset_and_amount(input_index);
+        check_assets_eq(asset_bits, expected_asset_bits);
+        check_asset_amounts_eq(amount, expected_amount);
+    }
+    pub fn ensure_output_asset_and_amount(output_index: u32, expected_asset_bits: u256, expected_amount: u64) {
+    let (asset_bits, amount): (u256, u64) = get_output_explicit_asset_and_amount(output_index);
+        check_assets_eq(asset_bits, expected_asset_bits);
+        check_asset_amounts_eq(amount, expected_amount);
+    }
+    pub fn ensure_input_asset_and_amount_ge(input_index: u32, expected_asset_bits: u256, minimal_amount: u64) {
+    let (asset_bits, amount): (u256, u64) = get_input_explicit_asset_and_amount(input_index);
+        check_assets_eq(asset_bits, expected_asset_bits);
+        assert!(ge_64(amount, minimal_amount));
+    }
+    pub fn ensure_output_asset_and_amount_ge(output_index: u32, expected_asset_bits: u256, minimal_amount: u64) {
+    let (asset_bits, amount): (u256, u64) = get_output_explicit_asset_and_amount(output_index);
+        check_assets_eq(asset_bits, expected_asset_bits);
+        assert!(ge_64(amount, minimal_amount));
+    }
+    pub fn ensure_io_asset_eq(input_index: u32, output_index: u32, expected_asset_bits: u256) -> (u64, u64) {
+    let (input_asset_bits, input_amount): (u256, u64) = get_input_explicit_asset_and_amount(input_index);
+        let (output_asset_bits, output_amount): (u256, u64) = get_output_explicit_asset_and_amount(output_index);
+        check_assets_eq(input_asset_bits, expected_asset_bits);
+        check_assets_eq(input_asset_bits, output_asset_bits);
+        (input_amount, output_amount)}
+    pub fn ensure_io_asset_and_amount_eq(input_index: u32, output_index: u32, expected_asset_bits: u256, expected_amount: u64) {
+    let (input_amount, output_amount): (u64, u64) = ensure_io_asset_eq(input_index, output_index, expected_asset_bits);
+        check_asset_amounts_eq(input_amount, expected_amount);
+        check_asset_amounts_eq(input_amount, output_amount);
+    }
+    pub fn ensure_input_asset_and_amount_burn(input_index: u32, output_index: u32, expected_asset_bits: u256, expected_asset_amount: u64) {
+    ensure_io_asset_and_amount_eq(input_index, output_index, expected_asset_bits, expected_asset_amount);
+        assert_output_is_op_return(output_index);
+    }
+    pub fn ensure_asset_transition_with_additional_amount(input_index: u32, output_index: u32, expected_asset_bits: u256, additional_amount: u64) {
+    let (input_amount, output_amount): (u64, u64) = ensure_io_asset_eq(input_index, output_index, expected_asset_bits);
+        let new_asset_amount: u64 = safe_add_64(input_amount, additional_amount);
+        check_asset_amounts_eq(output_amount, new_asset_amount);
+    }
+}
+mod unit_7 {
+    pub fn u64_to_u128(a: u64) -> u128 {
+    <(u64, u64)>::into((0, a))}
+    pub fn u64_to_u256(a: u64) -> u256 {
+    let a_u128: u128 = u64_to_u128(a);
+        <(u128, u128)>::into((0, a_u128))}
+    pub fn split_u64_into_u8(a: u64) -> (u8, u8, u8, u8, u8, u8, u8, u8) {
+    <u64>::into(a)}
+    pub fn split_u64_into_u16(a: u64) -> (u16, u16, u16, u16) {
+    <u64>::into(a)}
+    pub fn split_u64_into_u32(a: u64) -> (u32, u32) {
+    <u64>::into(a)}
+    pub fn safe_u64_to_u1(a: u64) -> u1 {
+    let u1_max: u64 = jet::left_pad_low_1_64(jet::high_1());
+        assert!(jet::le_64(a, u1_max));
+        jet::rightmost_64_1(a)}
+    pub fn safe_u64_to_u8(a: u64) -> u8 {
+    let u8_max: u64 = jet::left_pad_low_8_64(jet::high_8());
+        assert!(jet::le_64(a, u8_max));
+        jet::rightmost_64_8(a)}
+    pub fn safe_u64_to_u16(a: u64) -> u16 {
+    let u16_max: u64 = jet::left_pad_low_16_64(jet::high_16());
+        assert!(jet::le_64(a, u16_max));
+        jet::rightmost_64_16(a)}
+    pub fn safe_u64_to_u32(a: u64) -> u32 {
+    let u32_max: u64 = jet::left_pad_low_32_64(jet::high_32());
+        assert!(jet::le_64(a, u32_max));
+        jet::rightmost_64_32(a)}
+}
+mod unit_5 {
+    use crate::unit_7::u64_to_u256;
+    pub fn get_bool_slot_leaf(value: bool) -> u256 {
+    let value_num: u256 = u64_to_u256(jet::left_pad_low_1_64(<bool>::into(value)));
+        let state_ctx1: Ctx8 = jet::tapdata_init();
+        let state_ctx2: Ctx8 = jet::sha_256_ctx_8_add_32(state_ctx1, value_num);
+        jet::sha_256_ctx_8_finalize(state_ctx2)}
+    pub fn get_u64_slot_leaf(value: u64) -> u256 {
+    let value: u256 = u64_to_u256(value);
+        let state_ctx1: Ctx8 = jet::tapdata_init();
+        let state_ctx2: Ctx8 = jet::sha_256_ctx_8_add_32(state_ctx1, value);
+        jet::sha_256_ctx_8_finalize(state_ctx2)}
+    pub fn get_script_hash_from_tap_node(tap_node: u256) -> u256 {
+    let bip0341_key: u256 = 0x50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0;
+        let tweaked_key: u256 = jet::build_taptweak(bip0341_key, tap_node);
+        let hash_ctx1: Ctx8 = jet::sha_256_ctx_8_init();
+        let hash_ctx2: Ctx8 = jet::sha_256_ctx_8_add_2(hash_ctx1, 0x5120);
+        let hash_ctx3: Ctx8 = jet::sha_256_ctx_8_add_32(hash_ctx2, tweaked_key);
+        jet::sha_256_ctx_8_finalize(hash_ctx3)}
+}
+mod unit_0 {
+    use crate::unit_1::is_output_op_return;
+    use crate::unit_2::{safe_add_64, safe_sub_64};
+    use crate::unit_3::{get_explicit_asset_and_amount, check_asset_amounts_eq, check_assets_eq, check_flags_eq};
+    use crate::unit_4::{ensure_io_asset_eq, ensure_input_script_hash, ensure_output_script_hash, ensure_asset_transition_with_additional_amount};
+    use crate::unit_5::{get_bool_slot_leaf, get_u64_slot_leaf, get_script_hash_from_tap_node};
+    fn ensure_vault_asset(index: u32, is_input_index: bool) -> u64 {
+    let (vault_asset_id, vault_amount): (u256, u64) = get_explicit_asset_and_amount(index, is_input_index);
+        check_assets_eq(vault_asset_id, param::VAULT_ASSET_ID);
+        vault_amount}
+    fn ensure_input_vault_asset(input_index: u32) -> u64 {
+    ensure_vault_asset(input_index, true)}
+    fn ensure_output_vault_asset(output_index: u32) -> u64 {
+    ensure_vault_asset(output_index, false)}
+    fn get_script_hash_for_storage(is_active: bool, already_supplied: u64) -> u256 {
+    let is_active_slot_leaf: u256 = get_bool_slot_leaf(is_active);
+        let already_supplied_slot_leaf: u256 = get_u64_slot_leaf(already_supplied);
+        let first_tap_node: u256 = jet::build_tapbranch(jet::tapleaf_hash(), is_active_slot_leaf);
+        let tap_node: u256 = jet::build_tapbranch(first_tap_node, already_supplied_slot_leaf);
+        get_script_hash_from_tap_node(tap_node)}
+    fn auth_with_burn_check(input_asset_index: u32, output_asset_index: u32, expected_asset_id: u256, with_asset_burn: bool) {
+    let (input_amount, output_amount): (u64, u64) = ensure_io_asset_eq(input_asset_index, output_asset_index, expected_asset_id);
+        check_asset_amounts_eq(input_amount, output_amount);
+        match with_asset_burn{
+    false => {
+    }
+    ,
+    true => {
+    assert!(is_output_op_return(output_asset_index));
+    }
+    ,
+    }}
+    fn get_amount_to_goal(already_supplied: u64) -> u64 {
+    safe_sub_64(param::SUPPLY_GOAL, already_supplied)}
+    fn withdraw_all(input_keeper_index: u32, output_keeper_index: u32) {
+    let current_script_hash: u256 = get_script_hash_for_storage(false, param::SUPPLY_GOAL);
+        ensure_input_script_hash(jet::current_index(), current_script_hash);
+        auth_with_burn_check(input_keeper_index, output_keeper_index, param::KEEPER_AUTH_ASSET_ID, param::WITH_KEEPER_ASSET_BURN);
+        let _: u64 = ensure_input_vault_asset(jet::current_index());
+    }
+    fn withdraw_part(input_keeper_index: u32, output_keeper_index: u32, vault_output_index: u32, already_supplied: u64, amount_to_withdraw: u64) {
+    let current_script_hash: u256 = get_script_hash_for_storage(true, already_supplied);
+        ensure_input_script_hash(jet::current_index(), current_script_hash);
+        auth_with_burn_check(input_keeper_index, output_keeper_index, param::KEEPER_AUTH_ASSET_ID, false);
+        ensure_output_script_hash(vault_output_index, current_script_hash);
+        let vault_amount: u64 = ensure_input_vault_asset(jet::current_index());
+        let output_vault_amount: u64 = ensure_output_vault_asset(vault_output_index);
+        assert!(jet::lt_64(amount_to_withdraw, vault_amount));
+        let vault_change: u64 = safe_sub_64(vault_amount, amount_to_withdraw);
+        check_asset_amounts_eq(output_vault_amount, vault_change);
+    }
+    fn supply(input_supplier_index: u32, output_supplier_index: u32, vault_output_index: u32, already_supplied: u64, amount_to_supply: u64) {
+    let current_script_hash: u256 = get_script_hash_for_storage(true, already_supplied);
+        ensure_input_script_hash(jet::current_index(), current_script_hash);
+        auth_with_burn_check(input_supplier_index, output_supplier_index, param::SUPPLIER_AUTH_ASSET_ID, false);
+        let amount_to_goal: u64 = get_amount_to_goal(already_supplied);
+        assert!(jet::some_64(amount_to_supply));
+        assert!(jet::lt_64(amount_to_supply, amount_to_goal));
+        let new_supplied_amount: u64 = safe_add_64(already_supplied, amount_to_supply);
+        let new_script_hash: u256 = get_script_hash_for_storage(true, new_supplied_amount);
+        ensure_output_script_hash(vault_output_index, new_script_hash);
+        ensure_asset_transition_with_additional_amount(jet::current_index(), vault_output_index, param::VAULT_ASSET_ID, amount_to_supply);
+    }
+    fn final_supply(input_supplier_index: u32, output_supplier_index: u32, finalized_vault_output_index: u32, already_supplied: u64) {
+    let current_script_hash: u256 = get_script_hash_for_storage(true, already_supplied);
+        ensure_input_script_hash(jet::current_index(), current_script_hash);
+        auth_with_burn_check(input_supplier_index, output_supplier_index, param::SUPPLIER_AUTH_ASSET_ID, param::WITH_SUPPLIER_ASSET_BURN);
+        let finalized_vault_script_hash: u256 = get_script_hash_for_storage(false, param::SUPPLY_GOAL);
+        ensure_output_script_hash(finalized_vault_output_index, finalized_vault_script_hash);
+        ensure_asset_transition_with_additional_amount(jet::current_index(), finalized_vault_output_index, param::VAULT_ASSET_ID, get_amount_to_goal(already_supplied));
+    }
+    fn main() {
+    match witness::PATH{
+    Left(withdraw_params: Either<(u32, u32), (u32, u32, u32, u64, u64)>) => {
+    match withdraw_params{
+    Left(withdraw_all_params: (u32, u32)) => {
+    let (input_keeper_index, output_keeper_index): (u32, u32) = withdraw_all_params;
+        withdraw_all(input_keeper_index, output_keeper_index);
+    }
+    ,
+    Right(withdraw_part_params: (u32, u32, u32, u64, u64)) => {
+    let (input_keeper_index, output_keeper_index, vault_output_index, already_supplied, amount_to_withdraw): (u32, u32, u32, u64, u64) = withdraw_part_params;
+        withdraw_part(input_keeper_index, output_keeper_index, vault_output_index, already_supplied, amount_to_withdraw);
+    }
+    ,
+    }}
+    ,
+    Right(supply_params: Either<(u32, u32, u32, u64, u64), (u32, u32, u32, u64)>) => {
+    match supply_params{
+    Left(supply_params: (u32, u32, u32, u64, u64)) => {
+    let (input_supplier_index, output_supplier_index, vault_output_index, already_supplied, amount_to_supply): (u32, u32, u32, u64, u64) = supply_params;
+        supply(input_supplier_index, output_supplier_index, vault_output_index, already_supplied, amount_to_supply);
+    }
+    ,
+    Right(final_supply_params: (u32, u32, u32, u64)) => {
+    let (input_supplier_index, output_supplier_index, finalized_vault_output_index, already_supplied): (u32, u32, u32, u64) = final_supply_params;
+        final_supply(input_supplier_index, output_supplier_index, finalized_vault_output_index, already_supplied);
+    }
+    ,
+    }}
+    ,
+    }}
+}
