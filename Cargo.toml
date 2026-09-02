@@ -17,3 +17,6 @@ sha2 = { version = "0.10.9", features = ["compress"] }
 serde = { version = "1.0.228", features = ["derive"] }
 thiserror = { version = "2.0.18" }
 tracing = { version = "0.1.41" }
+[patch.crates-io.smplx-std]
+git = "https://github.com/gerau/smplx.git"
+rev = "e27ae4978e14c943e4f1c34d0da320dac5e834a7"

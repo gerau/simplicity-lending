@@ -64,13 +64,13 @@ impl<V> WatchCache<V> {
     }
 
     pub fn get(&self, outpoint: &OutPoint) -> Option<&V> {
-        if let Some(pending) = self.block_pending.as_ref()
-            && let Some(op) = pending.get(outpoint)
-        {
-            return match op {
-                PendingOp::Upsert(cached_data) => Some(cached_data),
-                PendingOp::Delete => None,
-            };
+        if let Some(pending) = self.block_pending.as_ref() {
+            if let Some(op) = pending.get(outpoint) {
+                return match op {
+                    PendingOp::Upsert(cached_data) => Some(cached_data),
+                    PendingOp::Delete => None,
+                };
+            }
         }
 
         self.inner.get(outpoint)
@@ -95,10 +95,10 @@ impl<V> WatchCache<V> {
         // Pending entries override committed ones.
         if let Some(pending) = self.block_pending.as_ref() {
             for (op, pending_op) in pending {
-                if let PendingOp::Upsert(v) = pending_op
-                    && pred(op, v)
-                {
-                    return Some((op, v));
+                if let PendingOp::Upsert(v) = pending_op {
+                    if pred(op, v) {
+                        return Some((op, v));
+                    }
                 }
             }
 

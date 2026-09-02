@@ -76,12 +76,12 @@ impl OffersTracker {
         let mut snapshots = VaultSnapshotsByOffer::new();
 
         for input in &tx.input {
-            if let Some(entry) = self.cache.get(&input.previous_output)
-                && entry.utxo_type == UtxoType::ActiveOffer
-            {
-                snapshots
-                    .entry(entry.offer_id)
-                    .or_insert_with(|| vaults.snapshot_vault_amounts(entry.offer_id));
+            if let Some(entry) = self.cache.get(&input.previous_output) {
+                if entry.utxo_type == UtxoType::ActiveOffer {
+                    snapshots
+                        .entry(entry.offer_id)
+                        .or_insert_with(|| vaults.snapshot_vault_amounts(entry.offer_id));
+                }
             }
         }
 

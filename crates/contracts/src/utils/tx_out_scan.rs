@@ -55,34 +55,34 @@ impl TxOutFilter<'_> {
             return false;
         };
 
-        if let Some(expected) = self.asset
-            && asset != expected
-        {
-            return false;
+        if let Some(expected) = self.asset {
+            if asset != expected {
+                return false;
+            }
         }
 
-        if let Some(expected) = self.amount
-            && amount != expected
-        {
-            return false;
+        if let Some(expected) = self.amount {
+            if amount != expected {
+                return false;
+            }
         }
 
-        if let Some(min) = self.min_amount
-            && amount < min
-        {
-            return false;
+        if let Some(min) = self.min_amount {
+            if amount < min {
+                return false;
+            }
         }
 
-        if let Some(script) = self.script_pubkey
-            && output.script_pubkey != *script
-        {
-            return false;
+        if let Some(script) = self.script_pubkey {
+            if output.script_pubkey != *script {
+                return false;
+            }
         }
 
-        if let Some(require_op_return) = self.require_op_return
-            && output.script_pubkey.is_op_return() != require_op_return
-        {
-            return false;
+        if let Some(require_op_return) = self.require_op_return {
+            if output.script_pubkey.is_op_return() != require_op_return {
+                return false;
+            }
         }
 
         true
